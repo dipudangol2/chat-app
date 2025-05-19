@@ -1,4 +1,4 @@
-import { genSalt } from "bcrypt";
+import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema({
 ! because arrow function does not have access to this
  */
 userSchema.pre("save", async function (next) {
-  const salt = await genSalt();
+  const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
   // ! make sure the next method is called always after generating the hash
   next();
