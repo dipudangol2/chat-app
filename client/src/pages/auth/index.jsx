@@ -8,9 +8,12 @@ import { toast } from 'sonner';
 import { apiClient } from "@/lib/api-client"
 import { LOGIN_ROUTE, SIGNUP_ROUTE } from '@/utils/constants';
 import { useNavigate } from "react-router-dom"
+import { useAppStore } from '@/store/index';
 
 const Auth = () => {
     const navigate = useNavigate();
+
+    const { setUserInfo } = useAppStore();
 
     //set fields
     const [email, setEmail] = useState("");
@@ -48,6 +51,7 @@ const Auth = () => {
         if (validateLogin()) {
             const res = await apiClient.post(LOGIN_ROUTE, { email, password }, { withCredentials: true });
             if (res.data.user.id) {
+                setUserInfo(res.data.user);
                 if (res.data.user.profileSetup) {
                     navigate("/chat");
                 }
@@ -65,6 +69,7 @@ const Auth = () => {
         if (validateSignup()) {
             const res = await apiClient.post(SIGNUP_ROUTE, { email, password }, { withCredentials: true });
             if (res.status === 201) {
+                setUserInfo(res.data.user);
                 navigate("/profile");
             }
             console.log(res);
