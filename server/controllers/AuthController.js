@@ -14,7 +14,7 @@ export const signup = async (req, res, next) => {
     if (!email && !password) {
       return res.send.status(400).send("Email and Password is required.");
     }
-    const user = await User.create({ email, password });
+    const user = await User.create({ email, password, profileSetup: false });
     res.cookie("jwt", createToken(email, user.id), {
       maxAge,
       secure: true,
@@ -62,6 +62,28 @@ export const login = async (req, res, next) => {
         image: user.image,
         color: user.color,
       },
+    });
+  } catch (error) {
+    console.log(`Error occured: ${error}`);
+    return res.status(500).send("Internal Server Error");
+  }
+};
+
+export const getUserInfo = async (req, res, next) => {
+  try {
+    const userData = await User.findById(req.userId);
+    if (!userData) {
+      return res.status(404).send("User with the id not found!");
+    }
+
+    return res.status(200).json({
+      id: userData.id,
+      email: userData.email,
+      profileSetup: userData.profileSetup,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      image: userData.image,
+      color: userData.color,
     });
   } catch (error) {
     console.log(`Error occured: ${error}`);
