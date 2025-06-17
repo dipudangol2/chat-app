@@ -8,19 +8,19 @@ const createToken = (email, userId) => {
   });
 };
 
-export const signup = async (req, res, next) => {
+export const signup = async (request, response, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = request.body;
     if (!email && !password) {
-      return res.send.status(400).send("Email and Password is required.");
+      return response.send.status(400).send("Email and Password is required.");
     }
     const user = await User.create({ email, password, profileSetup: false });
-    res.cookie("jwt", createToken(email, user.id), {
+    response.cookie("jwt", createToken(email, user.id), {
       maxAge,
       secure: true,
       sameSite: "None",
     });
-    return res.status(201).json({
+    return response.status(201).json({
       user: {
         id: user.id,
         email: user.email,
@@ -29,30 +29,30 @@ export const signup = async (req, res, next) => {
     });
   } catch (error) {
     console.log(`Error occured: ${error}`);
-    return res.status(500).send("Internal Server Error");
+    return response.status(500).send("Internal Server Error");
   }
 };
 
-export const login = async (req, res, next) => {
+export const login = async (request, response, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = request.body;
     if (!email && !password) {
-      return res.send.status(400).send("Email and Password is required.");
+      return response.send.status(400).send("Email and Password is required.");
     }
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).send("User with the credentials not found!");
+      return response.status(404).send("User with the credentials not found!");
     }
     const auth = await compare(password, user.password);
     if (!auth) {
-      return res.status(400).send("Password is incorrect!!");
+      return response.status(400).send("Password is incorrect!!");
     }
-    res.cookie("jwt", createToken(email, user.id), {
+    response.cookie("jwt", createToken(email, user.id), {
       maxAge,
       secure: true,
       sameSite: "None",
     });
-    return res.status(201).json({
+    return response.status(201).json({
       user: {
         id: user.id,
         email: user.email,
@@ -65,18 +65,18 @@ export const login = async (req, res, next) => {
     });
   } catch (error) {
     console.log(`Error occured: ${error}`);
-    return res.status(500).send("Internal Server Error");
+    return response.status(500).send("Internal Server Error");
   }
 };
 
-export const getUserInfo = async (req, res, next) => {
+export const getUserInfo = async (request, response, next) => {
   try {
-    const userData = await User.findById(req.userId);
+    const userData = await User.findById(request.userId);
     if (!userData) {
-      return res.status(404).send("User with the id not found!");
+      return response.status(404).send("User with the id not found!");
     }
 
-    return res.status(200).json({
+    return response.status(200).json({
       id: userData.id,
       email: userData.email,
       profileSetup: userData.profileSetup,
@@ -87,6 +87,40 @@ export const getUserInfo = async (req, res, next) => {
     });
   } catch (error) {
     console.log(`Error occured: ${error}`);
-    return res.status(500).send("Internal Server Error");
+    return response.status(500).send("Internal Server Error");
+  }
+};
+
+export const updateProfile = async (request, response, next) => {
+  try {
+    const { userId } = request;
+    const { firstName, lastName, color } = request.body;
+    if (!firstName || !lastName) {
+      return response.status(400).send("Credentials not passed!");
+    }
+
+    const userData = await User.findByIdAndUpdate(
+      userId,
+      {
+        firstName,
+        lastName,
+        color,
+        profileSetup: true,
+      },
+      { new: true, runValidators: true }
+    );
+
+    return response.status(200).json({
+      id: userData.id,
+      email: userData.email,
+      profileSetup: userData.profileSetup,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      image: userData.image,
+      color: userData.color,
+    });
+  } catch (error) {
+    console.log(`Error occured: ${error}`);
+    return response.status(500).send("Internal Server Error");
   }
 };
