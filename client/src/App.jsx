@@ -29,7 +29,6 @@ const App = () => {
     const getUserData = async () => {
       try {
         const res = await apiClient.get(GET_USER_INFO, { withCredentials: true });
-        console.log({ res });
         if (res.status === 200 && res.data.id) {
           setUserInfo(res.data);
         }
