@@ -14,7 +14,7 @@ export const signup = async (request, response, next) => {
   try {
     const { email, password } = request.body;
     if (!email && !password) {
-      return response.send.status(400).send("Email and Password is required.");
+      return response.status(400).send("Email and Password is required.");
     }
     const user = await User.create({ email, password, profileSetup: false });
     response.cookie("jwt", createToken(email, user.id), {
@@ -89,6 +89,7 @@ export const getUserInfo = async (request, response, next) => {
     });
   } catch (error) {
     console.log(`Error occured: ${error}`);
+
     return response.status(500).send("Internal Server Error");
   }
 };
@@ -171,6 +172,17 @@ export const removeProfileImage = async (request, response, next) => {
     return response.status(200).send("Profile Image removed successfully.");
   } catch (error) {
     console.log(`Error occured: ${error}`);
+    return response.status(500).send("Internal Server Error");
+  }
+};
+
+export const logout = async (request, response, next) => {
+  try {
+    response.cookie("jwt", "", { maxAge: 1, secure: true, sameSite: "None" });
+
+    return response.status(200).send("Logout Successful");
+  } catch (error) {
+    console.log(error);
     return response.status(500).send("Internal Server Error");
   }
 };
