@@ -3,7 +3,6 @@
     "module": "ES6",
     "target": "esnext",
     "baseUrl": ".",
-    "jsx": "react-jsx",
     "paths": {
       "@/*": ["src/*"]
     }
