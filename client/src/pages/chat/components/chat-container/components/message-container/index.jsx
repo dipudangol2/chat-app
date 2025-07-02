@@ -16,6 +16,8 @@ const MessageContainer = () => {
     userInfo,
     selectedChatMessages,
     setSelectedChatMessages,
+    setFileDownloadProgress,
+    setIsDownloading
   } = useAppStore();
   const [showImage, setShowImage] = useState(false);
   const [imageURL, setImageURL] = useState(null);
@@ -77,8 +79,15 @@ const MessageContainer = () => {
   };
 
   const downloadFile = async (fileUrl) => {
+    setIsDownloading(true);
+    setFileDownloadProgress(0);
     const response = await apiClient.get(`${HOST}/${fileUrl}`, {
       responseType: "blob",
+      onDownloadProgress: (progressEvent) => {
+        const { loaded, total } = progressEvent;
+        const percentCompleted = Math.round((loaded * 100) / total);
+        setFileDownloadProgress(percentCompleted);
+      }
     });
     const urlBlob = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
@@ -88,6 +97,8 @@ const MessageContainer = () => {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(urlBlob);
+    setIsDownloading(false);
+    setFileDownloadProgress(0);
   }
 
   const renderDMMessages = (message) => (
@@ -115,11 +126,11 @@ const MessageContainer = () => {
               ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50 "
               : "bg-[#2a2b33]/5 text-white/80 border-[#fff]/20 "
             } 
-          border inline-block p-4 rounded my-1 max-w-[50%] break-words whitespace-pre`}
+          border inline-block p-2 rounded my-1 max-w-[50%] break-words whitespace-pre`}
         >
           {
             checkIfImage(message.fileUrl)
-              ? (<div className="cursor-pointer"
+              ? (<div className="cursor-pointer "
                 onClick={() => {
                   setShowImage(true);
                   setImageURL(message.fileUrl);
@@ -129,19 +140,23 @@ const MessageContainer = () => {
                   src={`${HOST}/${message.fileUrl}`}
                   height={300}
                   width={300}
+
                 />
               </div>)
               : (
-                <div className="flex items-center justify-center gap-4 ">
-                  <span className="text-white/80 text-3xl bg-black/20 rounded-full p-3">
+                <div
+                  className="cursor-pointer flex items-center justify-center gap-2 "
+                  onClick={() => downloadFile(message.fileUrl)}>
+
+                  <span className="text-white/80 md:text-xl bg-black/20 rounded-full p-3">
                     <MdFolderZip />
                   </span>
-                  <span>{message.fileUrl.split("/").pop()}</span>
-                  <span className="bg-black/20 rounded-full p-3 text-2xl hover:bg-black/50 cursor-pointer transition-all duration-300 hover:text-white"
+                  <span className="text-sm md:text-md text-start break-all text-wrap ">{message.fileUrl.split("/").pop()}</span>
+                  {/* <span className="bg-black/20 rounded-full p-3 md:text-xl hover:bg-black/50 cursor-pointer transition-all duration-300 hover:text-white"
                     onClick={() => downloadFile(message.fileUrl)}
                   >
                     <IoMdArrowRoundDown />
-                  </span>
+                  </span> */}
                 </div>
               )
           }
@@ -161,12 +176,12 @@ const MessageContainer = () => {
       {renderMessages()}
       <div ref={scrollRef} />
       {showImage && (
-        <div className="fixed z-[1000] top-0 left-0 h-screen w-screen flex items-center justify-center backdrop-blur-lg flex-col  ">
+        <div className="fixed z-[50] top-0 left-0 h-screen w-screen flex items-center justify-center backdrop-blur-lg flex-col  ">
           <div>
             <img
               src={`${HOST}/${imageURL}`}
               alt="message image"
-              className="h-[80vh] w-full bg-cover"
+              className="h-auto max-h-[75vh] w-full bg-cover"
             />
           </div>
           <div className="flex gap-5 fixed top-0 mt-5">
