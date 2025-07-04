@@ -15,7 +15,13 @@ const MessageBar = () => {
   const [message, setMessage] = useState("");
   const socket = useSocket();
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const { selectedChatType, selectedChatData, userInfo, setIsUploading, setFileUploadProgress } = useAppStore();
+  const {
+    selectedChatType,
+    selectedChatData,
+    userInfo,
+    setIsUploading,
+    setFileUploadProgress,
+  } = useAppStore();
 
   // ? Functions
   useEffect(() => {
@@ -40,7 +46,16 @@ const MessageBar = () => {
         fileUrl: undefined,
       });
       setMessage("");
+    } else if (selectedChatType === "channel") {
+      socket.emit("send-channel-message", {
+        sender: userInfo.id,
+        content: message,
+        messageType: "text",
+        fileUrl: undefined,
+        channelId: selectedChatData._id,
+      });
     }
+    setMessage("");
   };
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
@@ -64,7 +79,7 @@ const MessageBar = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
-  }
+  };
   const handleAttachmentChange = async (event) => {
     try {
       const file = event.target.files[0];
@@ -74,10 +89,9 @@ const MessageBar = () => {
         setIsUploading(true);
         const response = await apiClient.post(UPLOAD_FILE_ROUTE, formData, {
           withCredentials: true,
-          onUploadProgress: data => {
+          onUploadProgress: (data) => {
             setFileUploadProgress(Math.round((100 * data.loaded) / data.total));
-
-          }
+          },
         });
 
         if (response.status === 200 && response.data) {
@@ -89,19 +103,23 @@ const MessageBar = () => {
               recipient: selectedChatData._id,
               messageType: "file",
               fileUrl: response.data.filePath,
-
-            })
-
+            });
+          } else if (selectedChatType === "channel") {
+            socket.emit("send-channel-message", {
+              sender: userInfo.id,
+              content: undefined,
+              messageType: "file",
+              fileUrl: response.data.filePath,
+              channelId: selectedChatData._id,
+            });
           }
         }
-
       }
-
     } catch (error) {
       setIsUploading(false);
       console.log("Error occured in attachment change" + error);
     }
-  }
+  };
 
   return (
     <div className="h-[10vh] bg-[#1c1d25] flex items-center justify-center px-8 mb-5 gap-6">
@@ -122,7 +140,12 @@ const MessageBar = () => {
         >
           <GrAttachment className="text-2xl" />
         </button>
-        <input type="file" hidden ref={fileInputRef} onChange={handleAttachmentChange} />
+        <input
+          type="file"
+          hidden
+          ref={fileInputRef}
+          onChange={handleAttachmentChange}
+        />
         <div className="relative flex">
           <button
             className="text-neutral-500 focus:border-none focus:outline-none focus:text-white duration-300 transition-all "
