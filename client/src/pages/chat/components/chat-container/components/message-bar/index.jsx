@@ -26,7 +26,7 @@ const MessageBar = () => {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);p
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [emojiRef]);
 
